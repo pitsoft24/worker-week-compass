@@ -1,0 +1,21 @@
+/* css/darkmode.css */
+body, html {
+    background: #181a1b !important;
+    color: #f1f1f1 !important;
+}
+header, nav, .teamkalender-table th, .teamkalender-table td {
+    background: #23272a !important;
+    color: #f1f1f1 !important;
+    border-color: #444 !important;
+}
+a, a:visited {
+    color: #8ab4f8 !important;
+}
+a:hover {
+    color: #fff !important;
+}
+select, input, button {
+    background: #23272a !important;
+    color: #f1f1f1 !important;
+    border-color: #444 !important;
+}
