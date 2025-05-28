@@ -91,11 +91,11 @@ require_once __DIR__ . '/../config/database.php';
                             </select>
                         </form>
                         <div style="margin-top:0.5em; font-size:1em;">
-                            <a href="?month=<?= $prev_month ?>&year=<?= $prev_year ?>&team=<?= $team ?>">&laquo; Vorheriger Monat</a>
+                            <a href="?month=<?= $prev_month ?>&year=<?= $prev_year ?>&team=<?= $team ?>" class="btn btn-secondary">&laquo; Vorheriger Monat</a>
                             |
                             <span style="font-weight:bold; font-size:1.1em; padding:0 10px;"> <?= ucfirst($monatsname) ?> <?= $jahr ?> </span>
                             |
-                            <a href="?month=<?= $next_month ?>&year=<?= $next_year ?>&team=<?= $team ?>">Nächster Monat &raquo;</a>
+                            <a href="?month=<?= $next_month ?>&year=<?= $next_year ?>&team=<?= $team ?>" class="btn btn-secondary">Nächster Monat &raquo;</a>
                         </div>
                     </th>
                 </tr>

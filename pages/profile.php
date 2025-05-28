@@ -1,33 +1,46 @@
 <?php
 // Profil Seite
 require_once __DIR__ . '/../config/database.php';
+
 if (!isset($_SESSION['user_id'])) {
-    echo '<p>Du bist nicht eingeloggt.</p>';
+    header('Location: auth/login.php');
     exit;
 }
+
 $user_id = $_SESSION['user_id'];
-$stmt = $pdo->prepare('SELECT username, email, created_at, team FROM users WHERE id = ?');
+$message = '';
+
+// Benutzerdaten laden
+$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
 $stmt->execute([$user_id]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch();
+
+// Dark Mode Update
+if (isset($_POST['dark_mode_select'])) {
+    $dark_mode = $_POST['dark_mode_select'] == '1' ? 1 : 0;
+    $update = $pdo->prepare('UPDATE users SET dark_mode = ? WHERE id = ?');
+    $update->execute([$dark_mode, $user_id]);
+    $message = 'Dark Mode Einstellung gespeichert!';
+    $user['dark_mode'] = $dark_mode;
+}
 
 // Passwort ändern
-$pw_success = null;
-$pw_error = null;
-if (isset($_POST['pw1'], $_POST['pw2'])) {
-    $pw1 = $_POST['pw1'];
-    $pw2 = $_POST['pw2'];
-    if (strlen($pw1) < 6) {
-        $pw_error = 'Das Passwort muss mindestens 6 Zeichen lang sein.';
-    } elseif ($pw1 !== $pw2) {
-        $pw_error = 'Die Passwörter stimmen nicht überein.';
-    } else {
-        $hash = password_hash($pw1, PASSWORD_DEFAULT);
-        $update = $pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
-        if ($update->execute([$hash, $user_id])) {
-            $pw_success = 'Passwort erfolgreich geändert!';
+if (isset($_POST['current_password'], $_POST['new_password'], $_POST['confirm_password'])) {
+    $current_password = $_POST['current_password'];
+    $new_password = $_POST['new_password'];
+    $confirm_password = $_POST['confirm_password'];
+
+    if (password_verify($current_password, $user['password'])) {
+        if ($new_password === $confirm_password) {
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            $update = $pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
+            $update->execute([$hashed_password, $user_id]);
+            $message = 'Passwort erfolgreich geändert!';
         } else {
-            $pw_error = 'Fehler beim Ändern des Passworts.';
+            $message = 'Die neuen Passwörter stimmen nicht überein.';
         }
+    } else {
+        $message = 'Das aktuelle Passwort ist falsch.';
     }
 }
 
@@ -91,107 +104,97 @@ if ($admin && isset($_GET['edit_user_id'])) {
     $stmt->execute([$edit_id]);
     $edit_user = $stmt->fetch(PDO::FETCH_ASSOC);
 }
+
+// Admin: Alle Benutzer laden
+$all_users = [];
+if ($user['username'] === 'admin') {
+    $stmt = $pdo->query('SELECT id, username, email, team, dark_mode FROM users');
+    $all_users = $stmt->fetchAll();
+}
 ?>
-<h2>Profil</h2>
-<?php if ($user): ?>
-    <table>
-        <tr><th>Benutzername:</th><td><?= htmlspecialchars($user['username']) ?></td></tr>
-        <tr><th>E-Mail:</th><td><?= htmlspecialchars($user['email']) ?></td></tr>
-        <tr><th>Team:</th><td>
-            <form method="post" style="display:inline;">
-                <select name="team_select" onchange="this.form.submit()">
-                    <option value="BK" <?= $user['team']==='BK'?'selected':'' ?>>BK</option>
-                    <option value="PDN" <?= $user['team']==='PDN'?'selected':'' ?>>PDN</option>
+
+<div class="container">
+    <h2 class="text-center mb-4">Profil</h2>
+    
+    <?php if ($message): ?>
+        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
+    <?php endif; ?>
+
+    <div class="card">
+        <h3>Benutzerinformationen</h3>
+        <p><strong>Benutzername:</strong> <?= htmlspecialchars($user['username']) ?></p>
+        <p><strong>E-Mail:</strong> <?= htmlspecialchars($user['email']) ?></p>
+        <?php if ($user['team']): ?>
+            <p><strong>Team:</strong> <?= htmlspecialchars($user['team']) ?></p>
+        <?php endif; ?>
+    </div>
+
+    <div class="card mt-4">
+        <h3>Dark Mode Einstellung</h3>
+        <form method="post" class="form-group">
+            <div class="form-group">
+                <label for="dark_mode_select">Dark Mode:</label>
+                <select name="dark_mode_select" id="dark_mode_select" class="form-control" onchange="this.form.submit()">
+                    <option value="1" <?= $user['dark_mode'] ? 'selected' : '' ?>>Aktiviert</option>
+                    <option value="0" <?= !$user['dark_mode'] ? 'selected' : '' ?>>Deaktiviert</option>
                 </select>
-            </form>
-            <?php if ($team_success): ?><span style="color:green;"> <?= $team_success ?></span><?php endif; ?>
-        </td></tr>
-        <tr><th>Registriert seit:</th><td><?= htmlspecialchars($user['created_at']) ?></td></tr>
-    </table>
-<?php else: ?>
-    <p>Benutzerprofil nicht gefunden.</p>
-<?php endif; ?>
+            </div>
+        </form>
+    </div>
 
-<hr>
-<h3>Passwort ändern</h3>
-<?php if ($pw_success): ?>
-    <div style="color:green;"> <?= $pw_success ?> </div>
-<?php elseif ($pw_error): ?>
-    <div style="color:red;"> <?= $pw_error ?> </div>
-<?php endif; ?>
-<form method="post" autocomplete="off">
-    <label>Neues Passwort:<br>
-        <input type="password" name="pw1" required minlength="6">
-    </label><br>
-    <label>Neues Passwort wiederholen:<br>
-        <input type="password" name="pw2" required minlength="6">
-    </label><br>
-    <button type="submit">Passwort ändern</button>
-</form>
+    <div class="card mt-4">
+        <h3>Passwort ändern</h3>
+        <form method="post" class="form-group">
+            <div class="form-group">
+                <label>Aktuelles Passwort:
+                    <input type="password" name="current_password" class="form-control" required>
+                </label>
+            </div>
+            <div class="form-group">
+                <label>Neues Passwort:
+                    <input type="password" name="new_password" class="form-control" required>
+                </label>
+            </div>
+            <div class="form-group">
+                <label>Neues Passwort bestätigen:
+                    <input type="password" name="confirm_password" class="form-control" required>
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Passwort ändern</button>
+        </form>
+    </div>
 
-<?php if ($admin): ?>
-<hr>
-<h3>Alle Benutzer</h3>
-<?php if ($delete_success): ?>
-    <div style="color:green;"> <?= htmlspecialchars($delete_success) ?> </div>
-<?php endif; ?>
-<?php if ($edit_success): ?>
-    <div style="color:green;"> <?= htmlspecialchars($edit_success) ?> </div>
-<?php elseif ($edit_error): ?>
-    <div style="color:red;"> <?= htmlspecialchars($edit_error) ?> </div>
-<?php endif; ?>
-<table border="1" cellpadding="5" cellspacing="0">
-    <tr>
-        <th>ID</th>
-        <th>Benutzername</th>
-        <th>E-Mail</th>
-        <th>Team</th>
-        <th>Registriert seit</th>
-        <th>Aktionen</th>
-    </tr>
-    <?php
-    $all = $pdo->query('SELECT id, username, email, team, created_at FROM users ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($all as $u): ?>
-        <tr>
-            <td><?= $u['id'] ?></td>
-            <td><?= htmlspecialchars($u['username']) ?></td>
-            <td><?= htmlspecialchars($u['email']) ?></td>
-            <td><?= htmlspecialchars($u['team']) ?></td>
-            <td><?= htmlspecialchars($u['created_at']) ?></td>
-            <td>
-                <?php if ($u['id'] !== $user_id): ?>
-                <form method="post" style="display:inline;">
-                    <input type="hidden" name="delete_user_id" value="<?= $u['id'] ?>">
-                    <button type="submit" onclick="return confirm('Benutzer wirklich löschen?');">Löschen</button>
-                </form>
-                <?php endif; ?>
-                <form method="get" action="index.php" style="display:inline;">
-                    <input type="hidden" name="page" value="profile">
-                    <input type="hidden" name="edit_user_id" value="<?= $u['id'] ?>">
-                    <button type="submit">Bearbeiten</button>
-                </form>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-</table>
-<?php if ($edit_user): ?>
-<hr>
-<h3>Benutzer bearbeiten (ID <?= $edit_user['id'] ?>)</h3>
-<form method="post">
-    <input type="hidden" name="edit_user_id_save" value="<?= $edit_user['id'] ?>">
-    <label>Benutzername:<br>
-        <input type="text" name="edit_username" value="<?= htmlspecialchars($edit_user['username']) ?>" required minlength="3">
-    </label><br>
-    <label>E-Mail:<br>
-        <input type="email" name="edit_email" value="<?= htmlspecialchars($edit_user['email']) ?>" required>
-    </label><br>
-    <label>Team:<br>
-        <select name="edit_team">
-            <option value="BK" <?= $edit_user['team']==='BK'?'selected':'' ?>>BK</option>
-            <option value="PDN" <?= $edit_user['team']==='PDN'?'selected':'' ?>>PDN</option>
-        </select>
-    </label><br>
-    <button type="submit">Speichern</button>
-</form>
-<?php endif; ?>
-<?php endif; ?>
+    <?php if ($admin): ?>
+        <div class="card mt-4">
+            <h3>Benutzerverwaltung</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Benutzername</th>
+                        <th>E-Mail</th>
+                        <th>Team</th>
+                        <th>Dark Mode</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($all_users as $u): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($u['username']) ?></td>
+                            <td><?= htmlspecialchars($u['email']) ?></td>
+                            <td><?= htmlspecialchars($u['team'] ?? '') ?></td>
+                            <td><?= $u['dark_mode'] ? 'Aktiviert' : 'Deaktiviert' ?></td>
+                            <td>
+                                <a href="?page=profile&edit=<?= $u['id'] ?>" class="btn btn-secondary">Bearbeiten</a>
+                                <?php if ($u['id'] !== $user_id): ?>
+                                    <a href="?page=profile&delete=<?= $u['id'] ?>" class="btn btn-danger" 
+                                       onclick="return confirm('Wirklich löschen?')">Löschen</a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</div>

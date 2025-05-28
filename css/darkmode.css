@@ -3,19 +3,115 @@ body, html {
     background: #181a1b !important;
     color: #f1f1f1 !important;
 }
-header, nav, .teamkalender-table th, .teamkalender-table td {
+
+header, nav {
+    background: #23272a !important;
+    color: #f1f1f1 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+.card, .calendar td, .calendar .status-form, .form-control, .table th, .table td {
     background: #23272a !important;
     color: #f1f1f1 !important;
     border-color: #444 !important;
 }
+
+.calendar th {
+    background: #181a1b !important;
+    color: #f1f1f1 !important;
+    border-color: #444 !important;
+}
+
+.calendar td {
+    background: #23272a !important;
+    color: #f1f1f1 !important;
+    border-color: #444 !important;
+}
+
+.calendar .today {
+    background-color: #bfa91a !important;
+    color: #23272a !important;
+    font-weight: bold;
+    border: 2px solid #ffe082 !important;
+    box-shadow: 0 0 8px #bfa91a55;
+}
+
 a, a:visited {
     color: #8ab4f8 !important;
 }
 a:hover {
     color: #fff !important;
 }
-select, input, button {
+
+.btn-primary {
+    background-color: #2563eb !important;
+    color: #fff !important;
+}
+.btn-primary:hover {
+    background-color: #1d4ed8 !important;
+}
+
+.btn-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+.btn-danger:hover {
+    background-color: #b52a37 !important;
+}
+
+.btn-secondary {
+    background-color: #495057 !important;
+    color: #fff !important;
+}
+.btn-secondary:hover {
+    background-color: #3d4246 !important;
+}
+
+input, select, textarea, button {
     background: #23272a !important;
     color: #f1f1f1 !important;
     border-color: #444 !important;
+}
+
+.alert-success {
+    background-color: #1e4620 !important;
+    border-color: #1a3e1c !important;
+    color: #d4edda !important;
+}
+
+.status-office {
+    background-color: #388e3c !important;
+    color: #fff !important;
+}
+.status-mobile {
+    background-color: #bfa91a !important;
+    color: #000 !important;
+}
+.status-absent {
+    background-color: #b52a37 !important;
+    color: #fff !important;
+}
+
+::-webkit-scrollbar {
+    background: #23272a;
+    width: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 5px;
+}
+
+.calendar {
+    background: #222222 !important;
+    color: #f1f1f1 !important;
+    border-color: #444 !important;
+}
+
+.calendar td.buero-tag {
+    background: #225c2a !important;
+    color: #f1f1f1 !important;
+}
+.calendar td.kein-buero-tag {
+    background: #3a2323 !important;
+    color: #f1f1f1 !important;
 }

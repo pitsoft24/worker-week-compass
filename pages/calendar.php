@@ -83,109 +83,93 @@ $open_day = isset($_POST['open_day']) ? $_POST['open_day'] : null;
 
 $pageParam = isset($_GET['page']) ? '&page=' . urlencode($_GET['page']) : '&page=calendar';
 ?>
-<h2>Kalender: <?= ucfirst($monatsname) ?> <?= $jahr ?></h2>
-<div style="margin-bottom:1em;">
-    <a href="?page=calendar&month=<?= $prev_month ?>&year=<?= $prev_year ?>">&laquo; Vorheriger Monat</a>
-    |
-    <a href="?page=calendar&month=<?= $next_month ?>&year=<?= $next_year ?>">Nächster Monat &raquo;</a>
-</div>
-<?php if ($status_success): ?>
-    <div style="color:green;">Status gespeichert!</div>
-<?php endif; ?>
-<style>
-    .kalender-tabelle td {
-        min-width: 110px;
-        height: 90px;
-        vertical-align: top;
-        background: #fff;
-        cursor: pointer;
-        position: relative;
-        border: 2px solid #bdbdbd; /* Gut sichtbarer Rahmen */
-        box-sizing: border-box;
-    }
-    .kalender-tabelle th {
-        border: 2px solid #bdbdbd;
-        background: #f5f5f5;
-        box-sizing: border-box;
-    }
-    .kalender-tabelle .heute { background: #ffe082 !important; font-weight: bold; }
-    .kalender-tabelle ul { margin: 0.3em 0 0 0; padding-left: 1em; font-size: 0.95em; }
-    .kalender-tabelle li { color: #1565c0; margin-bottom: 2px; word-break: break-word; }
-    .kalender-tabelle .tagzahl { font-size: 1.1em; }
-    .status-form { background:#f5f5f5; border:1px solid #bbb; padding:5px; position:absolute; top:20px; left:5px; z-index:10; }
-    .status-label { display:inline-block; margin-right:8px; }
-    .status-anzeige { font-size:0.95em; margin-top:0.3em; color:#388e3c; }
-</style>
-<form method="post" id="openDayForm" style="display:none;"><input type="hidden" name="open_day" id="openDayInput"></form>
-<table class="kalender-tabelle" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;">
-    <tr>
-        <?php foreach ($tage as $t): ?><th><?= $t ?></th><?php endforeach; ?>
-    </tr>
-    <?php
-    $tage_zaehler = 0;
-    $started = false;
-    for ($tag = 1; $tag <= $tage_im_monat; $tag++) {
-        $wochentag = date('N', strtotime("$jahr-$monat-$tag"));
-        if ($wochentag >= 1 && $wochentag <= 5) {
-            if (!$started) {
-                echo '<tr>';
-                // Leere Zellen, falls der Monat nicht an einem Montag beginnt
-                for ($i = 1; $i < $wochentag; $i++) {
-                    echo '<td></td>';
-                    $tage_zaehler++;
+<div class="container">
+    <h2 class="text-center mb-3">Kalender: <?= ucfirst($monatsname) ?> <?= $jahr ?></h2>
+    <div class="calendar-nav mb-3">
+        <a href="?page=calendar&month=<?= $prev_month ?>&year=<?= $prev_year ?>" class="btn btn-secondary">&laquo; Vorheriger Monat</a>
+        <a href="?page=calendar&month=<?= $next_month ?>&year=<?= $next_year ?>" class="btn btn-secondary">Nächster Monat &raquo;</a>
+    </div>
+    <?php if ($status_success): ?>
+        <div class="alert alert-success">Status gespeichert!</div>
+    <?php endif; ?>
+
+    <table class="calendar">
+        <tr>
+            <?php foreach ($tage as $t): ?><th><?= $t ?></th><?php endforeach; ?>
+        </tr>
+        <?php
+        $tage_zaehler = 0;
+        $started = false;
+        for ($tag = 1; $tag <= $tage_im_monat; $tag++) {
+            $wochentag = date('N', strtotime("$jahr-$monat-$tag"));
+            if ($wochentag >= 1 && $wochentag <= 5) {
+                if (!$started) {
+                    echo '<tr>';
+                    // Leere Zellen, falls der Monat nicht an einem Montag beginnt
+                    for ($i = 1; $i < $wochentag; $i++) {
+                        echo '<td></td>';
+                        $tage_zaehler++;
+                    }
+                    $started = true;
                 }
-                $started = true;
-            }
-            $date_str = sprintf('%04d-%02d-%02d', $jahr, $monat, $tag);
-            $is_today = ($heute !== null && $tag == $heute);
-            echo '<td class="'.($is_today ? 'heute' : '').'" onclick="openStatusForm(\''.$date_str.'\')">';
-            echo '<div class="tagzahl">'.$tag.'</div>';
-            // Status anzeigen
-            if (isset($status_map[$date_str])) {
-                echo '<div class="status-anzeige">'.htmlspecialchars($status_map[$date_str]).'</div>';
-            }
-            // Inline-Formular für diesen Tag
-            if ($open_day === $date_str) {
-                echo '<form method="post" class="status-form" onClick="event.stopPropagation();">
-                    <input type="hidden" name="status_date" value="'.$date_str.'">
-                    <label class="status-label"><input type="radio" name="status_select" value="Büro" required> Büro</label>
-                    <label class="status-label"><input type="radio" name="status_select" value="mobiles Arbeiten"> Mobiles Arbeiten</label>
-                    <label class="status-label"><input type="radio" name="status_select" value="nicht Anwesend"> Nicht Anwesend</label>
-                    <button type="submit">Speichern</button>
-                </form>';
-            }
-            echo '</td>';
-            $tage_zaehler++;
-            if ($tage_zaehler % 5 == 0) {
-                echo '</tr>';
-                $started = false;
+                $date_str = sprintf('%04d-%02d-%02d', $jahr, $monat, $tag);
+                $is_today = ($heute !== null && $tag == $heute);
+                echo '<td class="'.($is_today ? 'today' : '').'" onclick="openStatusForm(\''.$date_str.'\')">';
+                echo '<div class="day-number">'.$tag.'</div>';
+                // Status anzeigen
+                if (isset($status_map[$date_str])) {
+                    $status_class = '';
+                    switch($status_map[$date_str]) {
+                        case 'Büro':
+                            $status_class = 'status-office';
+                            break;
+                        case 'mobiles Arbeiten':
+                            $status_class = 'status-mobile';
+                            break;
+                        case 'nicht Anwesend':
+                            $status_class = 'status-absent';
+                            break;
+                    }
+                    echo '<div class="status-display '.$status_class.'">'.htmlspecialchars($status_map[$date_str]).'</div>';
+                }
+                // Inline-Formular für diesen Tag
+                if ($open_day === $date_str) {
+                    echo '<form method="post" class="status-form" onClick="event.stopPropagation();">
+                        <input type="hidden" name="status_date" value="'.$date_str.'">
+                        <div class="form-group">
+                            <label class="status-label"><input type="radio" name="status_select" value="Büro" required> Büro</label>
+                            <label class="status-label"><input type="radio" name="status_select" value="mobiles Arbeiten"> Mobiles Arbeiten</label>
+                            <label class="status-label"><input type="radio" name="status_select" value="nicht Anwesend"> Nicht Anwesend</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Speichern</button>
+                    </form>';
+                }
+                echo '</td>';
+                $tage_zaehler++;
+                if ($tage_zaehler % 5 == 0) {
+                    echo '</tr>';
+                    $started = false;
+                }
             }
         }
-    }
-    // Leere Zellen am Ende auffüllen
-    if ($tage_zaehler % 5 != 0) {
-        for ($i = $tage_zaehler % 5; $i < 5; $i++) {
-            echo '<td></td>';
+        // Leere Zellen am Ende auffüllen
+        if ($tage_zaehler % 5 != 0) {
+            for ($i = $tage_zaehler % 5; $i < 5; $i++) {
+                echo '<td></td>';
+            }
+            echo '</tr>';
         }
-        echo '</tr>';
-    }
-    ?>
-</table>
+        ?>
+    </table>
+</div>
+
+<form method="post" id="openDayForm" style="display:none;">
+    <input type="hidden" name="open_day" id="openDayInput">
+</form>
+
 <script>
 function openStatusForm(date) {
     document.getElementById('openDayInput').value = date;
     document.getElementById('openDayForm').submit();
 }
 </script>
-<div style="margin-top:2em;">
-    <h3>Termin eintragen</h3>
-    <form method="post">
-        <label>Datum:
-            <input type="date" name="event_date" value="<?= sprintf('%04d-%02d-01', $jahr, $monat) ?>" required>
-        </label>
-        <label>Termin:
-            <input type="text" name="event_text" required>
-        </label>
-        <button type="submit">Speichern</button>
-    </form>
-</div>
